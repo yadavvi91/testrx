@@ -96,7 +96,7 @@ public class RxJavaExampleTest {
     }
 
     @Test
-    public void testUsingComputationScheduler() {
+    public void testUsingComputationScheduler_willFail() {
         // given
         TestObserver<String> observer = new TestObserver<String>();
         Observable<String> observable = Observable.fromIterable(WORDS)

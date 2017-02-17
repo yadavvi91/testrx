@@ -1,4 +1,4 @@
-package org.yadavvi.testrx;
+package org.yadavvi.testrx.testscheduler;
 
 import io.reactivex.Observable;
 import io.reactivex.Scheduler;
