@@ -109,4 +109,26 @@ public class RxJavaExampleTest {
         assertThat(observer.values(), hasItem(" 4. fox"));
     }
 
+    @Test
+    public void testUsingBlockingCall() {
+        // given
+        Observable<String> observable = Observable.fromIterable(WORDS)
+                .zipWith(Observable.range(1, Integer.MAX_VALUE), new BiFunction<String, Integer, String>() {
+                    public String apply(@NonNull String word, @NonNull Integer index) throws Exception {
+                        return String.format("%2d. %s", index, word);
+                    }
+                });
+
+        // when
+        Iterable<String> results = observable
+                .subscribeOn(Schedulers.computation())
+                .blockingIterable();
+
+        // then
+        assertThat(results, notNullValue());
+        /*assertThat(results, iterableWithSize(9));*/
+        assertThat(results, hasItem(" 4. fox"));
+    }
+
+
 }
