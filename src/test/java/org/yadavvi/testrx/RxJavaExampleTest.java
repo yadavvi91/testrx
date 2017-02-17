@@ -10,8 +10,11 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
+import static org.awaitility.Awaitility.await;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
@@ -153,5 +156,34 @@ public class RxJavaExampleTest {
         observer.assertNoErrors();
         assertThat(observer.values(), hasItem(" 4. fox"));
     }
+
+    @Test
+    public void testUsingComputationScheduler_awaitility() {
+        // given
+        final TestObserver<String> observer = new TestObserver<String>();
+        Observable<String> observable = Observable.fromIterable(WORDS)
+                .zipWith(Observable.range(1, Integer.MAX_VALUE), new BiFunction<String, Integer, String>() {
+                    public String apply(@NonNull String word, @NonNull Integer index) throws Exception {
+                        return String.format("%2d. %s", index, word);
+                    }
+                });
+
+        // when
+        observable.subscribeOn(Schedulers.computation())
+                .subscribe(observer);
+
+        await().timeout(2, TimeUnit.SECONDS)
+                .until(new Callable<Integer>() {
+                    public Integer call() throws Exception {
+                        return observer.valueCount();
+                    }
+                }, equalTo(9));
+
+        // then
+        observer.assertComplete();
+        observer.assertNoErrors();
+        assertThat(observer.values(), hasItem(" 4. fox"));
+    }
+
 
 }
