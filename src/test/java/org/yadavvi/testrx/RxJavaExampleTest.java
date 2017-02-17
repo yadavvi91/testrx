@@ -1,10 +1,13 @@
 package org.yadavvi.testrx;
 
 import io.reactivex.Observable;
+import io.reactivex.Scheduler;
 import io.reactivex.annotations.NonNull;
 import io.reactivex.functions.BiFunction;
 import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
 import io.reactivex.observers.TestObserver;
+import io.reactivex.plugins.RxJavaPlugins;
 import io.reactivex.schedulers.Schedulers;
 import org.junit.Test;
 
@@ -183,6 +186,37 @@ public class RxJavaExampleTest {
         observer.assertComplete();
         observer.assertNoErrors();
         assertThat(observer.values(), hasItem(" 4. fox"));
+    }
+
+    @Test
+    public void testUsingRxJavaPluginsWithImmediateScheduler() {
+        // given
+        RxJavaPlugins.setComputationSchedulerHandler(new Function<Scheduler, Scheduler>() {
+            public Scheduler apply(@NonNull Scheduler scheduler) throws Exception {
+                return Schedulers.trampoline();
+            }
+        });
+        final TestObserver<String> observer = new TestObserver<String>();
+        Observable<String> observable = Observable.fromIterable(WORDS)
+                .zipWith(Observable.range(1, Integer.MAX_VALUE), new BiFunction<String, Integer, String>() {
+                    public String apply(@NonNull String word, @NonNull Integer index) throws Exception {
+                        return String.format("%2d. %s", index, word);
+                    }
+                });
+
+        try {
+            // when
+            observable.subscribeOn(Schedulers.computation())
+                    .subscribe(observer);
+
+            // then
+            observer.assertComplete();
+            observer.assertNoErrors();
+            observer.assertValueCount(9);
+            assertThat(observer.values(), hasItem(" 4. fox"));
+        } finally {
+            RxJavaPlugins.reset();
+        }
     }
 
 
